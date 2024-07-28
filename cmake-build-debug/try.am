@@ -1,0 +1,7 @@
+moshe: stop
+alm: mov ar bc
+abc: .data 2,32,1
+abc: .data 2,32,1
+mov r1 r2
+.data 1,2,3
+stop

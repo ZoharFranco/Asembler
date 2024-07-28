@@ -1,0 +1,3 @@
+C:/Zohar/University/C/Assembler/src/cmake-build-debug/CMakeFiles/src.dir
+C:/Zohar/University/C/Assembler/src/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Zohar/University/C/Assembler/src/cmake-build-debug/CMakeFiles/rebuild_cache.dir
