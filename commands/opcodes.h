@@ -80,7 +80,7 @@ Opcode get_opcode_from_opcode_string(char *opcode);
  * @param opcode: opcode to gets its bits int
  * @return the int representation of the opcode
  */
-int get_opcode_bits(Opcode opcode);
+unsigned int get_opcode_bits(Opcode opcode);
 
 
 /*!

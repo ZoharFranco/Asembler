@@ -52,7 +52,7 @@ Opcode get_opcode_from_opcode_string(char *opcode) {
     return OpcodesArray[get_index_in_array_string(opcode, get_opcodes_names(), OPCODES_LENGTH)];
 }
 
-int get_opcode_bits(Opcode opcode) {
+unsigned int get_opcode_bits(Opcode opcode) {
     return opcode.type << OPCODE_BITS_SHIFT;
 }
 

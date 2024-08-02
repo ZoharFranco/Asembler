@@ -89,7 +89,8 @@ int write_file_content(FileContent file_content, char *file_path) {
 
 void free_file_content(FileContent file_content) {
     for (int i = 0; i < file_content.line_count; i++) {
-        free(file_content.lines[i].line);
+        FileLine line = file_content.lines[i];
+        free(line.line);
     }
     free(file_content.lines);
 }

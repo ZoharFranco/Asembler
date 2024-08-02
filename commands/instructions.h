@@ -45,7 +45,8 @@ typedef struct DirectiveInstruction {
 // MachineCodeLine strict contians is_label if the line is label to insert it's address and content of line as string of bits
 typedef struct MachineCodeLine {
     int is_label;
-    char *line;
+    char *label;
+    unsigned int line;
 } MachineCodeLine;
 
 // MachineCodeContent struct contain machine code lines, length, error if got error through process to machine code content

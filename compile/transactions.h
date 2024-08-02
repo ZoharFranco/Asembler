@@ -31,7 +31,7 @@ int run_first_transaction(FileContent file_content, int *IC, int *DC, Table *cod
 
 // Second transaction flow
 
-void build_output_files(int *IC, int *DC, Table *code_segment, Table *data_segment, Table *symbols_table);
+void build_output_files(char *file_name, Table *code_segment, Table *data_segment, Table *symbols_table);
 
 int handle_entry_directive_updates(Table *symbol_table, DirectiveInstruction directive_instruction);
 

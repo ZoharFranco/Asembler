@@ -5,8 +5,6 @@
 #include <string.h>
 
 #include "macros.h"
-#include "../errors/errors.h"
-#include "../errors/errors_handling.h"
 #include "instructions.h"
 
 
@@ -73,10 +71,10 @@ int replace_macros(FileContent *file_content, Macro *macros, int macro_count) {
         for (int j = 0; j < macro_count; j++) {
             char *pos;
             while ((pos = strstr(file_content->lines[i].line, macros[j].name)) != NULL) {
-                int len_before = pos - file_content->lines[i].line;
-                int len_name = strlen(macros[j].name);
-                int len_value = strlen(macros[j].value);
-                int len_after = strlen(pos + len_name);
+                int len_before = (int) (pos - file_content->lines[i].line);
+                int len_name = (int) strlen(macros[j].name);
+                int len_value = (int) strlen(macros[j].value);
+                int len_after = (int) strlen(pos + len_name);
 
                 char *new_line = (char *) malloc(len_before + len_value + len_after + 1);
                 if (new_line == NULL) {

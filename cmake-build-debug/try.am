@@ -1,3 +1,4 @@
+sub r1, r4
 moshe: stop
 alm: mov ar bc
 abc: .data 2,32,1

@@ -1,3 +1,4 @@
+sub r1, r4
 ;aoeuaoeu
 moshe: stop
 ;aoeuaoeu

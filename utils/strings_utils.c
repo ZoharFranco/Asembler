@@ -136,7 +136,7 @@ char *number_to_binary(char *number_str) {
     return bits;
 }
 
-char **numbers_to_binary_list(char **number_str_list, int count) {
+char **numbers_to_numbers_list(char **number_str_list, int count) {
     char **binary_list = malloc(count * sizeof(char *));
     if (binary_list == NULL) {
         log_internal_error(ALLOCATION_FAILED_TO_ALLOCATE_MEMORY);
@@ -203,7 +203,7 @@ char **get_string_ascii_values_as_bits(const char *str) {
 }
 
 
-char *number_int_to_binary(int number) {
+char *number_int_to_binary(unsigned int number) {
     char *binary = malloc((LINE_BITS_LENGTH + 1) * sizeof(char)); // +1 for null terminator
     if (binary == NULL) {
         log_internal_error(ALLOCATION_FAILED_TO_ALLOCATE_MEMORY);

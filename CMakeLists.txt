@@ -30,8 +30,6 @@ add_executable(src
         compile/symbols.h
         compile/transactions.c
         compile/transactions.h
-        data_structures/node.c
-        data_structures/node.h
         data_structures/table.c
         data_structures/table.h
         errors/errors.c

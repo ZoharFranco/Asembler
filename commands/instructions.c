@@ -20,6 +20,7 @@
 #include "encoding.h"
 #include "array_utils.h"
 #include "errors_handling.h"
+#include "registers.h"
 
 
 char *parse_instruction_label(FileLine file_line) {
@@ -106,8 +107,10 @@ OpcodeInstruction parse_opcode_instruction(FileLine file_line) {
     char *label = parse_instruction_label(file_line);
     Opcode opcode = get_opcode_from_opcode_string(parse_instruction_key(file_line));
     char *args = parse_instruction_args(file_line);
+    remove_whitespace(args);
+
     int number_of_args;
-    char **split_args = split_string(args, " ", &number_of_args);
+    char **split_args = split_string(args, ",", &number_of_args);
 
     OpcodeInstructionArg source_arg = {};
     OpcodeInstructionArg destination_arg = {};
@@ -179,37 +182,71 @@ MachineCodeContent opcode_instruction_to_machine_code_content(OpcodeInstruction 
     MachineCodeLine *machine_code_lines = malloc((instruction.number_of_args + 1) * sizeof(MachineCodeLine));
 
     // Create opcode machine code line
-    int opcode_line = get_opcode_bits(instruction.opcode);
-    opcode_line += get_addressing_bits(instruction.source_arg.addressing) << SOURCE_ADDRESSING_BITS_SHIFT;
-    opcode_line += get_addressing_bits(instruction.destination_arg.addressing) << DESTINATION_ADDRESSING_BITS_SHIFT;
-    opcode_line += get_encoding_bits(A);
-    machine_code_lines[0] = (MachineCodeLine) {!is_empty_string(instruction.label), number_int_to_binary(opcode_line)};
+    unsigned int opcode_bits = get_opcode_bits(instruction.opcode);
+    opcode_bits += get_addressing_bits(instruction.source_arg.addressing) << SOURCE_ADDRESSING_BITS_SHIFT;
+    opcode_bits += get_addressing_bits(instruction.destination_arg.addressing) << DESTINATION_ADDRESSING_BITS_SHIFT;
+    opcode_bits += get_encoding_bits(A);
+    machine_code_lines[0] = (MachineCodeLine) {!is_empty_string(instruction.label), instruction.label, opcode_bits};
     machine_code_content.line_count++;
 
-    if (instruction.number_of_args == 1) {
-        if (instruction.source_arg.type == REGISTRY_OPCODE_ARG) {
+    unsigned int bits;
+    // Create opcode args machine code lines
+    if (instruction.number_of_args == 2 &&
+        instruction.source_arg.type == REGISTRY_OPCODE_ARG &&
+        instruction.destination_arg.type == REGISTRY_OPCODE_ARG) {
+        // Handle two registers args
+        machine_code_content.line_count++;
+        Register reg1 = get_register_from_register_string(instruction.source_arg.data);
+        Register reg2 = get_register_from_register_string(instruction.destination_arg.data);
+        bits = get_registers_bits(reg1, reg2) + get_encoding_bits(A);
+        machine_code_lines[1] = (MachineCodeLine) {0, "", bits};
 
-        } else if (instruction.source_arg.type == LABEL_OPCODE_ARG) {
+    } else {
 
-        } else if (instruction.source_arg.type == NUMBER_OPCODE_ARG) {
+        // Handle first argument
+        if (instruction.number_of_args >= 1) {
+            machine_code_content.line_count++;
+            MachineCodeLine arg1_machine_code_line;
+            if (instruction.source_arg.type == REGISTRY_OPCODE_ARG) {
+                arg1_machine_code_line.is_label = 0;
+                Register reg = get_register_from_register_string(instruction.source_arg.data);
+                bits = get_register_bits(reg, 1) + get_encoding_bits(A);
+                arg1_machine_code_line.line = bits;
+            } else if (instruction.source_arg.type == LABEL_OPCODE_ARG) {
+                arg1_machine_code_line.is_label = 1;
+                arg1_machine_code_line.label = instruction.source_arg.data;
+            } else {
+                // Number argument
+                arg1_machine_code_line.is_label = 0;
+                arg1_machine_code_line.line =
+                        (atoi(instruction.source_arg.data) << ENCODINGS_BITS) + get_encoding_bits(A);
+            }
+            machine_code_lines[1] = arg1_machine_code_line;
 
-        } else {
-            machine_code_content.error = 1;
         }
 
-    }
-
-    if (instruction.number_of_args == 2) {
-        if (instruction.source_arg.type == REGISTRY_OPCODE_ARG) {
-
-        } else if (instruction.source_arg.type == LABEL_OPCODE_ARG) {
-
-        } else if (instruction.source_arg.type == NUMBER_OPCODE_ARG) {
-
-        } else {
-            machine_code_content.error = 1;
+        // Handle second argument (must be register)
+        if (instruction.number_of_args == 2) {
+            machine_code_content.line_count++;
+            MachineCodeLine arg2_machine_code_line;
+            if (instruction.destination_arg.type == REGISTRY_OPCODE_ARG) {
+                arg2_machine_code_line.is_label = 0;
+                Register reg = get_register_from_register_string(instruction.destination_arg.data);
+                bits = get_register_bits(reg, 1) + get_encoding_bits(A);
+                arg2_machine_code_line.line = bits;
+            } else if (instruction.destination_arg.type == LABEL_OPCODE_ARG) {
+                arg2_machine_code_line.is_label = 1;
+                arg2_machine_code_line.label = instruction.destination_arg.data;
+            } else {
+                // Number argument
+                arg2_machine_code_line.is_label = 0;
+                arg2_machine_code_line.line =
+                        (atoi(instruction.destination_arg.data) << ENCODINGS_BITS) + get_encoding_bits(A);
+            }
+            machine_code_lines[2] = arg2_machine_code_line;
         }
     }
+
 
     machine_code_content.lines = machine_code_lines;
     return machine_code_content;
@@ -224,18 +261,19 @@ MachineCodeContent data_directive_instruction_to_machine_code_content(DirectiveI
         return machine_code_content;
     }
 
-    remove_whitespace(instruction.args);
+
     int count;
     char **split_args = split_string(instruction.args, ",", &count);
+
     MachineCodeLine *machine_code_lines = malloc(count * sizeof(MachineCodeLine));
-    char **numbers_bits = numbers_to_binary_list(split_args, count);
 
     for (int i = 0; i < count; i++) {
-        if (!is_valid_number(numbers_bits[i])) {
+        remove_whitespace(split_args[i]);
+        if (!is_valid_number(split_args[i])) {
             machine_code_content.error = DATA_BAD_FORMAT;
             return machine_code_content;
         }
-        machine_code_lines[i] = (MachineCodeLine) {0, numbers_bits[i]};
+        machine_code_lines[i] = (MachineCodeLine) {0, "", atoi(split_args[i])};
     }
 
     machine_code_content.lines = machine_code_lines;
@@ -260,8 +298,7 @@ MachineCodeContent string_directive_instruction_to_machine_code_content(Directiv
     machine_code_content.line_count = (int) strlen(instruction.args) - 1;
     MachineCodeLine *machine_code_lines = malloc(machine_code_content.line_count * sizeof(MachineCodeLine));
     for (int i = 0; i < machine_code_content.line_count; i++) {
-        char char_string[] = {instruction.args[i], '\0'};
-        machine_code_lines[i] = (MachineCodeLine) {0, char_string};
+        machine_code_lines[i] = (MachineCodeLine) {0, "", (int) instruction.args[i]};
     }
     machine_code_content.lines = machine_code_lines;
 

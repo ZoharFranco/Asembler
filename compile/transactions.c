@@ -175,8 +175,8 @@ int handle_opcodes_missing_addresses(int *IC, Table *code_segment, Table *symbol
     for (int i = 0; i < segment_entry->machine_code_content.line_count; ++i) {
         MachineCodeLine machine_code_line = segment_entry->machine_code_content.lines[i];
         if (machine_code_line.is_label) {
-            Symbol *symbol = get_symbol_by_label(symbols_table, machine_code_line.line);
-            machine_code_line.line = short_to_binary(symbol->address);
+            Symbol *symbol = get_symbol_by_label(symbols_table, machine_code_line.label);
+            machine_code_line.line = symbol->address;
         }
         *IC += segment_entry->machine_code_content.line_count;
     }
@@ -184,11 +184,72 @@ int handle_opcodes_missing_addresses(int *IC, Table *code_segment, Table *symbol
 
 }
 
-void build_output_files(int *IC, int *DC, Table *code_segment, Table *data_segment, Table *symbols_table) {
+void build_output_files(char *file_name, Table *code_segment, Table *data_segment, Table *symbols_table) {
 
-    // Build object file
+    // Build ob file
+    FILE *ob_file = NULL;
+    ob_file = fopen("output.ob", "w");
 
-    // Build file
+    // Code segment
+    for (int i = 0; i < code_segment->size; ++i) {
+        SegmentEntry *segment = (SegmentEntry *) code_segment->entries[i].data;
+        int start_address = segment->start_address;
+
+        for (int j = 0; j < segment->machine_code_content.line_count; ++j) {
+            MachineCodeLine line = segment->machine_code_content.lines[i];
+            fprintf(ob_file, "%d %o\n", start_address + j, line.line);
+        }
+
+    }
+
+    // Data segment
+    for (int i = 0; i < data_segment->size; ++i) {
+        SegmentEntry *segment = (SegmentEntry *) data_segment->entries[i].data;
+        int start_address = segment->start_address;
+
+        for (int j = 0; j < segment->machine_code_content.line_count; ++j) {
+            MachineCodeLine line = segment->machine_code_content.lines[i];
+            fprintf(ob_file, "%d %o\n", start_address + j, line.line);
+        }
+
+    }
+
+    if (ob_file != NULL) {
+        fclose(ob_file);
+    }
+
+    // Build ent file
+    FILE *ent_file = NULL;
+    for (int i = 0; i < symbols_table->size; ++i) {
+        Symbol *symbol = (Symbol *) symbols_table->entries[i].data;
+        if (symbol->type == ENTRY_SYMBOL) {
+            if (ent_file == NULL) {
+                ent_file = fopen("output.ent", "w");
+            }
+            fprintf(ent_file, "%s %d\n", symbol->label, symbol->address);
+        }
+    }
+    if (ent_file != NULL) {
+        fclose(ent_file);
+    }
+
+    // Build ext file
+    FILE *ext_file = NULL;
+    for (int i = 0; i < symbols_table->size; ++i) {
+        Symbol *symbol = (Symbol *) symbols_table->entries[i].data;
+        if (symbol->type == EXTERNAL_SYMBOL) {
+            if (ext_file == NULL) {
+                ext_file = fopen("output.ext", "w");
+            }
+            fprintf(ext_file, "%s %d\n", symbol->label, symbol->address);
+        }
+    }
+
+    // Close the file if it was opened
+    if (ext_file != NULL) {
+        fclose(ext_file);
+    }
+
 
 }
 
@@ -243,7 +304,7 @@ int run_second_transaction(FileContent file_content, int *IC, int *DC, Table *co
     }
 
     // Build output files
-    build_output_files(IC, DC, code_segment, data_segment, symbols_table);
+    build_output_files(file_content.file_name, code_segment, data_segment, symbols_table);
     return SUCCESS;
 }
 

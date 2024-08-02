@@ -45,19 +45,19 @@ Register get_register_from_register_string(char *reg) {
     return RegistersArray[get_index_in_array_string(reg, get_registers_names(), REGISTERS_LENGTH)];
 }
 
-unsigned short get_register_bits(Register reg, int is_src) {
+unsigned int get_register_bits(Register reg, int is_src) {
     if (is_src) {
-        return (unsigned int) (reg.number + 1) << REGISTER_SRC_BITS_SHIFT;
+        return (reg.number + 1) << REGISTER_SRC_BITS_SHIFT;
     } else {
-        return (unsigned int) (reg.number + 1) << REGISTER_DST_BITS_SHIFT;
+        return (reg.number + 1) << REGISTER_DST_BITS_SHIFT;
     }
 
 }
 
-unsigned short get_registers_bits(Register src_reg, Register dst_reg) {
+unsigned int get_registers_bits(Register src_reg, Register dst_reg) {
 
-    return ((unsigned int) (src_reg.number + 1) << REGISTER_SRC_BITS_SHIFT) +
-           ((unsigned int) (dst_reg.number + 1) << REGISTER_DST_BITS_SHIFT);
+    return ((int) (src_reg.number + 1) << REGISTER_SRC_BITS_SHIFT) +
+           ((dst_reg.number + 1) << REGISTER_DST_BITS_SHIFT);
 
 }
 

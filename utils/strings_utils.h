@@ -61,7 +61,7 @@ char **numbers_to_binary_list(char **number_str_list, int count);
  * @param number
  * @return binary string of the number
  */
-char *number_int_to_binary(int number);
+char *number_int_to_binary(unsigned int number);
 
 /*!
  * Function that gets string of string ("after") and return if valid (string between "")
@@ -69,21 +69,6 @@ char *number_int_to_binary(int number);
  * @return return 1 if string is valid and 0 otherwise
  */
 int is_valid_string(const char *str);
-
-/*!
- * Function that gets char and return ascii value as string of bits
- * @param ch : char to get its bits
- * @return string of char bits
- */
-char *char_to_bits(char ch);
-
-
-/*!
- * Function that gets string and return list of ascii bits as strings each ascii bits string for each char
- * @param str : string to gets its char ascii bits list
- * @return list of each char as string of bits
- */
-char **get_string_ascii_values_as_bits(const char *str);
 
 
 #endif // STRINGS_UTILS_H
