@@ -6,6 +6,7 @@
 
 #include "macros.h"
 #include "instructions.h"
+#include "strings_utils.h"
 
 
 int read_and_remove_macros(FileContent *file_content, Macro **macros, int *macro_count) {
@@ -46,7 +47,7 @@ int read_and_remove_macros(FileContent *file_content, Macro **macros, int *macro
                     *macros = new_macros;
                 }
 
-                if (!is_valid_label(name)) {
+                if (is_empty_string(name) || !is_valid_label(name)) {
                     log_external_error(ILLEGAL_MACRO_NAME, i, file_content->file_name);
                     return EXTERNAL_FATAL_ERROR;
                 }

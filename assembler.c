@@ -73,6 +73,9 @@ int compile(char *src_path) {
     }
 
     free_file_content(file_content);
+    free_table(data_segment);
+    free_table(code_segment);
+    free_table(symbol_table);
 
     return SUCCESS;
 }

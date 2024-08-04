@@ -1,14 +1,13 @@
 #ifndef ENCODING_H
 #define ENCODING_H
 
-#define ENCODINGS_SHIFT 0
 #define ENCODINGS_BITS 3
 
 /*!
  * Enum of encoding types
  */
 typedef enum {
-    A, R, E, ENCODINGS_LENGTH
+    E, R, A, ENCODINGS_LENGTH
 } EncodingType;
 
 

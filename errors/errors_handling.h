@@ -1,10 +1,8 @@
 #ifndef ERRORS_HANDLING_H
 #define ERRORS_HANDLING_H
 
-#include "../utils/file_utils.h"
-#include "errors.h"
+#include "file_utils.h"
 
-#define ERROR_LOG_MAX_SIZE 200
 
 /*!
  * Log an external error that occurred

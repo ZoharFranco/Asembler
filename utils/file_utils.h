@@ -50,5 +50,11 @@ int write_file_content(FileContent file_content, char *file_path);
  */
 void free_file_content(FileContent file_content);
 
+/*!
+ * Function to add string line to start of file
+ * @param file_path: file path to add to
+ * @param new_line: line to add to start of file
+ */
+void add_line_to_file_start(const char *file_path, const char *new_line);
 
 #endif // FILE_UTILS_H

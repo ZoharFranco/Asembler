@@ -34,7 +34,6 @@ char *parse_instruction_label(FileLine file_line) {
     if (strchr(file_line.line, ':')) {
         if (sscanf(file_line.line, "%[^:]:", label) != 1) {
             free(label);  // Free allocated memory on error
-            log_internal_error(ALLOCATION_FAILED_TO_ALLOCATE_MEMORY);
             return "";
         }
     } else {
@@ -54,14 +53,12 @@ char *parse_instruction_key(FileLine file_line) {
     if (strchr(file_line.line, ':')) {
         if (sscanf(file_line.line, "%*[^:]: %s", instruction_key) != 1) {
             free(instruction_key);  // Free allocated memory on error
-            log_internal_error(ALLOCATION_FAILED_TO_ALLOCATE_MEMORY);
             return "";
         }
     } else {
         // If no colon, just copy the entire line
         if (sscanf(file_line.line, "%s", instruction_key) != 1) {
             free(instruction_key);  // Free allocated memory on error
-            log_internal_error(ALLOCATION_FAILED_TO_ALLOCATE_MEMORY);
             return "";
         }
     }
@@ -75,19 +72,16 @@ char *parse_instruction_args(FileLine file_line) {
         return NULL;
     }
 
-
     // Check if there's a colon in the line
     if (strchr(file_line.line, ':')) {
         if (sscanf(file_line.line, "%*[^:]: %*s %[^:^\n]", args) != 1) {
             free(args);  // Free allocated memory on error
-            log_internal_error(ALLOCATION_FAILED_TO_ALLOCATE_MEMORY);
             return "";
         }
     } else {
         // If no colon, just copy the entire line
         if (sscanf(file_line.line, "%*s %[^:^\n]", args) != 1) {
             free(args);  // Free allocated memory on error
-            log_internal_error(ALLOCATION_FAILED_TO_ALLOCATE_MEMORY);
             return "";
         }
     }
@@ -115,12 +109,14 @@ OpcodeInstruction parse_opcode_instruction(FileLine file_line) {
     OpcodeInstructionArg source_arg = {};
     OpcodeInstructionArg destination_arg = {};
 
-    if (number_of_args >= 1) {
-        source_arg = parse_opcode_instruction_arg(split_args[0]);
-        if (number_of_args == 2) {
-            destination_arg = parse_opcode_instruction_arg(split_args[1]);
-        }
+    if (number_of_args == 1) {
+        destination_arg = parse_opcode_instruction_arg(split_args[0]);
     }
+    if (number_of_args == 2) {
+        source_arg = parse_opcode_instruction_arg(split_args[0]);
+        destination_arg = parse_opcode_instruction_arg(split_args[1]);
+    }
+
 
     OpcodeInstruction opcode_instruction;
     opcode_instruction.number_of_args = number_of_args;
@@ -183,10 +179,17 @@ MachineCodeContent opcode_instruction_to_machine_code_content(OpcodeInstruction 
 
     // Create opcode machine code line
     unsigned int opcode_bits = get_opcode_bits(instruction.opcode);
-    opcode_bits += get_addressing_bits(instruction.source_arg.addressing) << SOURCE_ADDRESSING_BITS_SHIFT;
-    opcode_bits += get_addressing_bits(instruction.destination_arg.addressing) << DESTINATION_ADDRESSING_BITS_SHIFT;
+
+    if (instruction.number_of_args == 1) {
+        opcode_bits += get_addressing_bits(instruction.destination_arg.addressing) << DESTINATION_ADDRESSING_BITS_SHIFT;
+    }
+    if (instruction.number_of_args == 2) {
+        opcode_bits += get_addressing_bits(instruction.source_arg.addressing) << SOURCE_ADDRESSING_BITS_SHIFT;
+        opcode_bits += get_addressing_bits(instruction.destination_arg.addressing) << DESTINATION_ADDRESSING_BITS_SHIFT;
+    }
+
     opcode_bits += get_encoding_bits(A);
-    machine_code_lines[0] = (MachineCodeLine) {!is_empty_string(instruction.label), instruction.label, opcode_bits};
+    machine_code_lines[0] = (MachineCodeLine) {0, instruction.label, opcode_bits};
     machine_code_content.line_count++;
 
     unsigned int bits;
@@ -203,8 +206,30 @@ MachineCodeContent opcode_instruction_to_machine_code_content(OpcodeInstruction 
 
     } else {
 
-        // Handle first argument
-        if (instruction.number_of_args >= 1) {
+        // Handle one argument
+        if (instruction.number_of_args == 1) {
+            machine_code_content.line_count++;
+            MachineCodeLine arg1_machine_code_line;
+            if (instruction.destination_arg.type == REGISTRY_OPCODE_ARG) {
+                arg1_machine_code_line.is_label = 0;
+                Register reg = get_register_from_register_string(instruction.destination_arg.data);
+                bits = get_register_bits(reg, 0) + get_encoding_bits(A);
+                arg1_machine_code_line.line = bits;
+            } else if (instruction.destination_arg.type == LABEL_OPCODE_ARG) {
+                arg1_machine_code_line.is_label = 1;
+                arg1_machine_code_line.label = instruction.destination_arg.data;
+            } else {
+                // Number argument
+                arg1_machine_code_line.is_label = 0;
+                arg1_machine_code_line.line =
+                        (atoi(instruction.destination_arg.data) << ENCODINGS_BITS) + get_encoding_bits(A);
+            }
+            machine_code_lines[1] = arg1_machine_code_line;
+
+        }
+
+        // Handle second argument (must be register)
+        if (instruction.number_of_args == 2) {
             machine_code_content.line_count++;
             MachineCodeLine arg1_machine_code_line;
             if (instruction.source_arg.type == REGISTRY_OPCODE_ARG) {
@@ -223,16 +248,12 @@ MachineCodeContent opcode_instruction_to_machine_code_content(OpcodeInstruction 
             }
             machine_code_lines[1] = arg1_machine_code_line;
 
-        }
-
-        // Handle second argument (must be register)
-        if (instruction.number_of_args == 2) {
             machine_code_content.line_count++;
             MachineCodeLine arg2_machine_code_line;
             if (instruction.destination_arg.type == REGISTRY_OPCODE_ARG) {
                 arg2_machine_code_line.is_label = 0;
                 Register reg = get_register_from_register_string(instruction.destination_arg.data);
-                bits = get_register_bits(reg, 1) + get_encoding_bits(A);
+                bits = get_register_bits(reg, 0) + get_encoding_bits(A);
                 arg2_machine_code_line.line = bits;
             } else if (instruction.destination_arg.type == LABEL_OPCODE_ARG) {
                 arg2_machine_code_line.is_label = 1;
@@ -284,6 +305,7 @@ MachineCodeContent data_directive_instruction_to_machine_code_content(DirectiveI
 MachineCodeContent string_directive_instruction_to_machine_code_content(DirectiveInstruction instruction) {
     MachineCodeContent machine_code_content;
     machine_code_content.error = 0;
+    machine_code_content.line_count = 0;
 
     if (!is_valid_label(instruction.label)) {
         machine_code_content.error = ILLEGAL_LABEL;
@@ -295,10 +317,10 @@ MachineCodeContent string_directive_instruction_to_machine_code_content(Directiv
         return machine_code_content;
     }
 
-    machine_code_content.line_count = (int) strlen(instruction.args) - 1;
+    machine_code_content.line_count = (int) strlen(instruction.args) - 2;
     MachineCodeLine *machine_code_lines = malloc(machine_code_content.line_count * sizeof(MachineCodeLine));
     for (int i = 0; i < machine_code_content.line_count; i++) {
-        machine_code_lines[i] = (MachineCodeLine) {0, "", (int) instruction.args[i]};
+        machine_code_lines[i] = (MachineCodeLine) {0, "", (int) instruction.args[i+1]};
     }
     machine_code_content.lines = machine_code_lines;
 

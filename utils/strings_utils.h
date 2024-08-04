@@ -71,4 +71,6 @@ char *number_int_to_binary(unsigned int number);
 int is_valid_string(const char *str);
 
 
+char *format_number(unsigned int number, int length);
+
 #endif // STRINGS_UTILS_H

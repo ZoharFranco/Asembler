@@ -76,7 +76,6 @@ int write_file_content(FileContent file_content, char *file_path) {
     FILE *file = fopen(file_path, "w");
     if (file == NULL) {
         return FILE_FAILED_TO_OPEN_NEW_FILE_FOR_WRITING;
-
     }
 
     for (int i = 0; i < file_content.line_count; i++) {
@@ -93,4 +92,26 @@ void free_file_content(FileContent file_content) {
         free(line.line);
     }
     free(file_content.lines);
+}
+
+
+void add_line_to_file_start(const char *file_path, const char *new_line) {
+    FILE *file = fopen(file_path, "r");
+
+
+    fseek(file, 0, SEEK_END);
+    long file_size = ftell(file);
+    fseek(file, 0, SEEK_SET);
+    char *content = malloc(file_size + 1);
+    fread(content, 1, file_size, file);
+    content[file_size] = '\0';
+    fclose(file);
+
+
+    file = fopen(file_path, "w");
+
+    fprintf(file, "%s\n", new_line);
+    fprintf(file, "%s", content);
+    fclose(file);
+    free(content);
 }

@@ -13,6 +13,8 @@
 #include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
+#include <math.h>
+
 
 #include "../assembler.h"
 #include "../errors/errors.h"
@@ -20,14 +22,16 @@
 #include "errors_handling.h"
 
 void remove_whitespace(char *str) {
-    char *dst = str;
-    while (*str) {
-        if (!isspace((unsigned char) *str)) {
-            *dst++ = *str;
+    if (str[0] != '\0') {
+        char *dst = str;
+        while (*str) {
+            if (!isspace((unsigned char) *str)) {
+                *dst++ = *str;
+            }
+            str++;
         }
-        str++;
-    }
-    *dst = '\0';  // Null-terminate the cleaned string
+        *dst = '\0';
+    } // Null-terminate the cleaned string
 }
 
 char **split_string(char *str, char *delimiter, int *count) {
@@ -83,6 +87,7 @@ char **split_string(char *str, char *delimiter, int *count) {
 }
 
 int is_empty_string(char *str) {
+    if (str == NULL) return 1;
     while (*str != '\0') {
         if (!isspace((unsigned char) *str)) {
             return 0;
@@ -136,25 +141,6 @@ char *number_to_binary(char *number_str) {
     return bits;
 }
 
-char **numbers_to_numbers_list(char **number_str_list, int count) {
-    char **binary_list = malloc(count * sizeof(char *));
-    if (binary_list == NULL) {
-        log_internal_error(ALLOCATION_FAILED_TO_ALLOCATE_MEMORY);
-        return NULL;
-    }
-    for (int i = 0; i < count; ++i) {
-        binary_list[i] = number_to_binary(number_str_list[i]);
-        if (binary_list[i] == NULL) {
-            // Cleanup allocated memory on error
-            for (int j = 0; j < i; ++j) {
-                free(binary_list[j]);
-            }
-            free(binary_list);
-            return NULL;
-        }
-    }
-    return binary_list;
-}
 
 int is_valid_string(const char *str) {
     size_t len = strlen(str);
@@ -164,57 +150,34 @@ int is_valid_string(const char *str) {
     return (str[0] == '"' && str[len - 1] == '"');
 }
 
-char *char_to_bits(char ch) {
-    char *bits = malloc((LINE_BITS_LENGTH + 1) * sizeof(char));
-    if (bits == NULL) {
-        log_internal_error(ALLOCATION_FAILED_TO_ALLOCATE_MEMORY);
-        return NULL;
-    }
-    for (int i = LINE_BITS_LENGTH - 1; i >= 0; --i) {
-        bits[LINE_BITS_LENGTH - 1 - i] = ((ch >> i) & 1) ? '1' : '0';
-    }
-    bits[LINE_BITS_LENGTH] = '\0';
-    return bits;
-}
 
+// Function to format the number as an 8-character string
+char *format_number(unsigned int number, int length) {
 
-char **get_string_ascii_values_as_bits(const char *str) {
-    size_t len = strlen(str);
-    char **ascii_bits = malloc(len * sizeof(char *));
-    if (ascii_bits == NULL) {
-        log_internal_error(ALLOCATION_FAILED_TO_ALLOCATE_MEMORY);
-        return NULL;
+    char *result = malloc(length * sizeof(char));
+
+    // Calculate the divisor for extracting the last 'length' digits
+    int divisor = pow(10, length);
+
+    // Handle negative values and flip the bits if necessary
+    unsigned int absNumber;
+    if (number < 0) {
+        absNumber = (unsigned int) (-number); // Convert negative number to unsigned
+    } else {
+        absNumber = (unsigned int) number;
     }
 
-    size_t idx = 0;
-    for (size_t i = 1; i < len - 1; ++i) {
-        ascii_bits[idx++] = char_to_bits(str[i]);
-        if (ascii_bits[idx - 1] == NULL) {
-            for (size_t j = 0; j < idx - 1; ++j) {
-                free(ascii_bits[j]);
-            }
-            free(ascii_bits);
-            log_internal_error(ALLOCATION_FAILED_TO_ALLOCATE_MEMORY);
-            return NULL;
-        }
-    }
-    ascii_bits[idx] = NULL;
-    return ascii_bits;
-}
+    // Get the last 'length' digits by modulo operation
+    int lastNDigits = absNumber % divisor;
 
+    // Create the format string to specify leading zeros based on 'length'
+    char format[10];
+    snprintf(format, sizeof(format), "%%0%d%d", length, length);
 
-char *number_int_to_binary(unsigned int number) {
-    char *binary = malloc((LINE_BITS_LENGTH + 1) * sizeof(char)); // +1 for null terminator
-    if (binary == NULL) {
-        log_internal_error(ALLOCATION_FAILED_TO_ALLOCATE_MEMORY);
-        return NULL;
-    }
+    // Print the result with leading zeros if necessary
+    snprintf(result, length + 1, format, lastNDigits);
 
-    // Fill the binary array with '0' and '1' based on the bits in the number
-    for (int i = LINE_BITS_LENGTH - 1; i >= 0; --i) {
-        binary[LINE_BITS_LENGTH - 1 - i] = (number & (1 << i)) ? '1' : '0';
-    }
-    binary[LINE_BITS_LENGTH] = '\0'; // Null-terminate the string
+    printf("%s", result);
 
-    return binary;
+    return result;
 }

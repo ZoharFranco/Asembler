@@ -9,12 +9,14 @@
  */
 
 
+
 #include "segments.h"
 #include "transactions.h"
 #include "instructions.h"
 #include "strings_utils.h"
 #include "symbols.h"
 #include "errors_handling.h"
+#include "file_utils.h"
 
 
 int handle_store_directive_first_transaction(int *DC, Table *data_segment,
@@ -76,18 +78,25 @@ int handle_opcode_instruction_first_transaction(int *IC, Table *code_segment, Ta
 
     // Handle data (step 11-12)
     MachineCodeContent machine_code_content = opcode_instruction_to_machine_code_content(opcode_instruction);
-    SegmentEntry segment_entry = (SegmentEntry) {machine_code_content, CODE_SEGMENT, *IC,
+    SegmentEntry segment_entry = (SegmentEntry) {machine_code_content, CODE_SEGMENT, *IC + CODE_SEGMENT_START,
                                                  opcode_instruction.assembly_line, opcode_instruction.label};
     add_segment_entry(code_segment, &segment_entry);
     *IC += machine_code_content.line_count;
     return SUCCESS;
 }
 
-void handle_data_segment_addresses_updates(const int *IC, Table *symbols_table) {
-
+void handle_data_segment_addresses_updates(const int *IC, Table *symbols_table, Table *data_segment) {
     for (int i = 0; i < symbols_table->size; ++i) {
         Symbol *s = symbols_table->entries[i].data;
-        s->address += *IC + 100;
+        if (s->type == DATA_SYMBOL) {
+            s->address += *IC + CODE_SEGMENT_START;
+        }
+
+    }
+
+    for (int i = 0; i < data_segment->size; ++i) {
+        SegmentEntry *s = data_segment->entries[i].data;
+        s->start_address += *IC + CODE_SEGMENT_START;
     }
 }
 
@@ -148,7 +157,7 @@ int run_first_transaction(FileContent file_content, int *IC, int *DC, Table *cod
     }
 
     // Handle data segment addresses updates (step 15)
-    handle_data_segment_addresses_updates(IC, symbols_table);
+    handle_data_segment_addresses_updates(IC, symbols_table, data_segment);
 
     return SUCCESS;
 }
@@ -174,9 +183,15 @@ int handle_opcodes_missing_addresses(int *IC, Table *code_segment, Table *symbol
     SegmentEntry *segment_entry = get_segment_entry_by_assembly_line(code_segment, opcode_instruction.assembly_line);
     for (int i = 0; i < segment_entry->machine_code_content.line_count; ++i) {
         MachineCodeLine machine_code_line = segment_entry->machine_code_content.lines[i];
-        if (machine_code_line.is_label) {
+        if (machine_code_line.is_label && !is_empty_string(machine_code_line.label)) {
             Symbol *symbol = get_symbol_by_label(symbols_table, machine_code_line.label);
-            machine_code_line.line = symbol->address;
+            if (symbol->type == EXTERNAL_SYMBOL) {
+                machine_code_line.line = (symbol->address << ENCODINGS_BITS) + get_encoding_bits(E);
+            } else {
+                machine_code_line.line = (symbol->address << ENCODINGS_BITS) + get_encoding_bits(R);
+            }
+
+            segment_entry->machine_code_content.lines[i] = machine_code_line;
         }
         *IC += segment_entry->machine_code_content.line_count;
     }
@@ -188,45 +203,59 @@ void build_output_files(char *file_name, Table *code_segment, Table *data_segmen
 
     // Build ob file
     FILE *ob_file = NULL;
-    ob_file = fopen("output.ob", "w");
+
+    char ob_file_name[100];
+    strcpy(ob_file_name, file_name);
+    strcat(ob_file_name, OBJECT_FILE_EXTENSION);
+    ob_file = fopen(ob_file_name, "w");
 
     // Code segment
-    for (int i = 0; i < code_segment->size; ++i) {
+    int total_code_segment_size = 0;
+    for (int i = 0; i < code_segment->size; i++) {
         SegmentEntry *segment = (SegmentEntry *) code_segment->entries[i].data;
         int start_address = segment->start_address;
 
-        for (int j = 0; j < segment->machine_code_content.line_count; ++j) {
-            MachineCodeLine line = segment->machine_code_content.lines[i];
-            fprintf(ob_file, "%d %o\n", start_address + j, line.line);
+        for (int j = 0; j < segment->machine_code_content.line_count; j++) {
+            MachineCodeLine line = segment->machine_code_content.lines[j];
+            fprintf(ob_file, "%04d %05o\n", start_address + j, (unsigned) (line.line & MASK_LAST_5_OCTAL_DIGITS));
+            total_code_segment_size += 1;
         }
 
     }
 
     // Data segment
-    for (int i = 0; i < data_segment->size; ++i) {
+    int total_data_segment_size = 0;
+    for (int i = 0; i < data_segment->size; i++) {
         SegmentEntry *segment = (SegmentEntry *) data_segment->entries[i].data;
         int start_address = segment->start_address;
 
-        for (int j = 0; j < segment->machine_code_content.line_count; ++j) {
-            MachineCodeLine line = segment->machine_code_content.lines[i];
-            fprintf(ob_file, "%d %o\n", start_address + j, line.line);
+        for (int j = 0; j < segment->machine_code_content.line_count; j++) {
+            MachineCodeLine line = segment->machine_code_content.lines[j];
+            fprintf(ob_file, "%04d %05o\n", start_address + j, (unsigned) (line.line & MASK_LAST_5_OCTAL_DIGITS));
+            total_data_segment_size += 1;
         }
 
     }
-
     if (ob_file != NULL) {
         fclose(ob_file);
     }
 
+    char *lengths_line = malloc(sizeof(char) * 10);
+    snprintf(lengths_line, 10, " %d   %d", total_code_segment_size, total_data_segment_size);
+    add_line_to_file_start(ob_file_name, lengths_line);
+
     // Build ent file
+    char ent_file_name[100];
+    strcpy(ent_file_name, file_name);
+    strcat(ent_file_name, ENTRY_FILE_EXTENSION);
     FILE *ent_file = NULL;
-    for (int i = 0; i < symbols_table->size; ++i) {
+    for (int i = 0; i < symbols_table->size; i++) {
         Symbol *symbol = (Symbol *) symbols_table->entries[i].data;
         if (symbol->type == ENTRY_SYMBOL) {
             if (ent_file == NULL) {
-                ent_file = fopen("output.ent", "w");
+                ent_file = fopen(ent_file_name, "w");
             }
-            fprintf(ent_file, "%s %d\n", symbol->label, symbol->address);
+            fprintf(ent_file, "%s %04d\n", symbol->label, symbol->address);
         }
     }
     if (ent_file != NULL) {
@@ -234,18 +263,31 @@ void build_output_files(char *file_name, Table *code_segment, Table *data_segmen
     }
 
     // Build ext file
+    char ext_file_name[100];
+    strcpy(ext_file_name, file_name);
+    strcat(ext_file_name, EXTERN_FILE_EXTENSION);
     FILE *ext_file = NULL;
-    for (int i = 0; i < symbols_table->size; ++i) {
+    for (int i = 0; i < symbols_table->size; i++) {
         Symbol *symbol = (Symbol *) symbols_table->entries[i].data;
         if (symbol->type == EXTERNAL_SYMBOL) {
             if (ext_file == NULL) {
-                ext_file = fopen("output.ext", "w");
+                ext_file = fopen(ext_file_name, "w");
             }
-            fprintf(ext_file, "%s %d\n", symbol->label, symbol->address);
+            // Find instruction with code
+            for (int j = 0; j < code_segment->size; j++) {
+                SegmentEntry *segment = (SegmentEntry *) code_segment->entries[j].data;
+                int start_address = segment->start_address;
+                for (int k = 0; k < segment->machine_code_content.line_count; k++) {
+                    MachineCodeLine line = segment->machine_code_content.lines[k];
+                    if (line.is_label && strcmp(line.label, symbol->label) == 0) {
+                        fprintf(ext_file, "%s %04d\n", symbol->label, start_address + k);
+                    }
+                }
+
+            }
+
         }
     }
-
-    // Close the file if it was opened
     if (ext_file != NULL) {
         fclose(ext_file);
     }
@@ -269,10 +311,11 @@ int run_second_transaction(FileContent file_content, int *IC, int *DC, Table *co
         }
 
         InstructionType instruction_type = get_instruction_type(file_content.lines[i]);
-        switch (instruction_type) {
 
-            // Handle directive instruction (steps 4-8)
+        // Handle directive instruction (steps 4-8)
+        switch (instruction_type) {
             case (DIRECTIVE_INSTRUCTION): {
+
                 DirectiveInstruction directive_instruction = parse_directive_instruction(file_content.lines[i]);
                 if (directive_instruction.directive.type == ENTRY_DIRECTIVE) {
                     // Handle store directive instruction (steps 4-6)
@@ -280,14 +323,12 @@ int run_second_transaction(FileContent file_content, int *IC, int *DC, Table *co
                 }
                 break;
             }
-
-                // Handle opcode instruction (steps 7)
             case (OPCODE_INSTRUCTION): {
+                // Handle opcode instruction (steps 7)
                 OpcodeInstruction opcode_instruction = parse_opcode_instruction(file_content.lines[i]);
                 line_status = handle_opcodes_missing_addresses(IC, code_segment, symbols_table, opcode_instruction);
                 break;
             }
-
             default:
                 break;
         }
@@ -298,12 +339,12 @@ int run_second_transaction(FileContent file_content, int *IC, int *DC, Table *co
         }
     }
 
-    // Handle first transaction error check (step 14)
+    // Handle first transaction error check (step 9)
     if (was_transaction_error) {
         return EXTERNAL_FATAL_ERROR;
     }
 
-    // Build output files
+    // Build output files (step 10)
     build_output_files(file_content.file_name, code_segment, data_segment, symbols_table);
     return SUCCESS;
 }

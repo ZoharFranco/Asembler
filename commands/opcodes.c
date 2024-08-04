@@ -60,10 +60,12 @@ unsigned int get_opcode_bits(Opcode opcode) {
 OpcodeInstructionArg parse_opcode_instruction_arg(char *arg) {
     switch (arg[0]) {
         case (IMMEDIATE_ADDRESSING_CHAR): {
+            arg += 1;
             return (OpcodeInstructionArg) {arg, NUMBER_OPCODE_ARG, IMMEDIATE_ADDRESSING};
         }
 
         case (REGISTRY_INDIRECT_ADDRESSING_CHAR): {
+            arg += 1;
             return (OpcodeInstructionArg) {arg, REGISTRY_OPCODE_ARG, REGISTRY_INDIRECT_ADDRESSING};
         }
 
