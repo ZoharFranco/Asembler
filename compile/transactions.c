@@ -78,6 +78,10 @@ int handle_opcode_instruction_first_transaction(int *IC, Table *code_segment, Ta
 
     // Handle data (step 11-12)
     MachineCodeContent machine_code_content = opcode_instruction_to_machine_code_content(opcode_instruction);
+    if (machine_code_content.error != SUCCESS) {
+        return machine_code_content.error;
+    }
+
     SegmentEntry segment_entry = (SegmentEntry) {machine_code_content, CODE_SEGMENT, *IC + CODE_SEGMENT_START,
                                                  opcode_instruction.assembly_line, opcode_instruction.label};
     add_segment_entry(code_segment, &segment_entry);
@@ -104,14 +108,23 @@ int run_first_transaction(FileContent file_content, int *IC, int *DC, Table *cod
                           Table *symbols_table) {
 
     int was_transaction_error = 0;
+    ErrorNumber line_status;
 
     // Handle running on instruction lines (steps 2-13)
     for (int i = 0; i < file_content.line_count; i++) {
-        ErrorNumber line_status = SUCCESS;
+        line_status = SUCCESS;
 
         if (is_empty_string(file_content.lines[i].line)) {
             continue;
         }
+
+        // Check line length
+        if (strlen(file_content.lines[i].line) > LINE_MAX_SIZE) {
+            was_transaction_error = 1;
+            log_external_error(TOO_LONG_INSTRUCTION_LINE, i, file_content.file_name);
+            continue;
+        }
+
 
         InstructionType instruction_type = get_instruction_type(file_content.lines[i]);
         switch (instruction_type) {
@@ -185,6 +198,9 @@ int handle_opcodes_missing_addresses(int *IC, Table *code_segment, Table *symbol
         MachineCodeLine machine_code_line = segment_entry->machine_code_content.lines[i];
         if (machine_code_line.is_label && !is_empty_string(machine_code_line.label)) {
             Symbol *symbol = get_symbol_by_label(symbols_table, machine_code_line.label);
+            if (symbol == NULL) {
+                return USED_LABEL_NOT_EXIST;
+            }
             if (symbol->type == EXTERNAL_SYMBOL) {
                 machine_code_line.line = (symbol->address << ENCODINGS_BITS) + get_encoding_bits(E);
             } else {
@@ -295,7 +311,7 @@ void build_output_files(char *file_name, Table *code_segment, Table *data_segmen
 
 }
 
-int run_second_transaction(FileContent file_content, int *IC, int *DC, Table *code_segment, Table *data_segment,
+int run_second_transaction(FileContent file_content, int *IC, Table *code_segment, Table *data_segment,
                            Table *symbols_table) {
 
     int was_transaction_error = 0;

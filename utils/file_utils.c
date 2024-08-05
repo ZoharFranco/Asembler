@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "file_utils.h"
+#include "strings_utils.h"
 
 
 FileContent read_file_content(char *file_path) {
@@ -87,10 +88,6 @@ int write_file_content(FileContent file_content, char *file_path) {
 }
 
 void free_file_content(FileContent file_content) {
-    for (int i = 0; i < file_content.line_count; i++) {
-        FileLine line = file_content.lines[i];
-        free(line.line);
-    }
     free(file_content.lines);
 }
 

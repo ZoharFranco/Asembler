@@ -10,10 +10,10 @@
 #include "directives.h"
 #include "opcodes.h"
 
-
-#define LABEL_MAX_SIZE 30
-#define INSTRUCTION_KEY_MAX_SIZE 30
-#define INSTRUCTION_ARGS_MAX_SIZE 50
+#define LINE_MAX_SIZE 80
+#define LABEL_BUFFER_SIZE 128
+#define INSTRUCTION_KEY_BUFFER_SIZE 128
+#define INSTRUCTION_ARGS_BUFFER_SIZE 128
 
 
 /*!

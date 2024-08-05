@@ -22,6 +22,12 @@ int read_and_remove_macros(FileContent *file_content, Macro **macros, int *macro
         char *line = file_content->lines[i].line;
         if (strncmp(line, MACRO_START_LABEL, MACRO_START_LABEL_LENGTH) == 0) {
             char *name = strtok(line + MACRO_START_LABEL_LENGTH, " ");
+            char *other_line = line + MACRO_START_LABEL_LENGTH + 1;
+            if (strcmp(other_line, name) != 0) {
+                log_external_error(NOT_IN_FORMAT_MACRO_NAME, i, file_content->file_name);
+                return EXTERNAL_FATAL_ERROR;
+            }
+            strip_newline(name);
             char value[MACRO_MAX_LENGTH] = "";
 
             // Read and remove value until "endmacro" is found
@@ -103,23 +109,27 @@ void free_macros(Macro *macros, int macro_count) {
 }
 
 void handle_macros(FileContent *file_content) {
+    file_content->error = SUCCESS;
     int macro_count;
     Macro *macros;
-    int read_status = read_and_remove_macros(file_content, &macros, &macro_count);
 
+    int read_status = read_and_remove_macros(file_content, &macros, &macro_count);
     if (read_status != SUCCESS) {
-        log_internal_error(read_status);
+        if (get_error_from_error_number(read_status).is_external == 0) {
+            log_internal_error(read_status);
+        }
         file_content->error = PRECOMPILATION_MACROS_READING_ERROR;
     }
 
     int replace_status = replace_macros(file_content, macros, macro_count);
-    free_macros(macros, macro_count);
-
     if (replace_status != SUCCESS) {
-        log_internal_error(replace_status);
+        if (get_error_from_error_number(read_status).is_external == 0) {
+            log_internal_error(replace_status);
+        }
         file_content->error = PRECOMPILATION_MACROS_REPLACING_ERROR;
     }
 
-    file_content->error = SUCCESS;
+    free_macros(macros, macro_count);
+
 }
 

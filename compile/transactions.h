@@ -1,12 +1,6 @@
 #ifndef TRANSACTIONS_H
 #define TRANSACTIONS_H
 
-#include "../utils/file_utils.h"
-#include "../data_structures/table.h"
-
-#include "../commands/opcodes.h"
-#include "../commands/directives.h"
-#include "../commands/instructions.h"
 
 #define OBJECT_FILE_EXTENSION ".ob"
 #define ENTRY_FILE_EXTENSION ".ent"
@@ -109,13 +103,12 @@ void build_output_files(char *file_name, Table *code_segment, Table *data_segmen
  * Run the second transaction by the project algorithm
  * @param file_content : the file content object to compile
  * @param IC : Instruction counter
- * @param DC : Data counter
  * @param code_segment : Code segment of all the machine code that the assembly code create
  * @param data_segment : Data segment of all the data machine code that the assembly code create
  * @param symbols_table : Symbol table with symbols and their address
  * @return the status of the operation
  */
-int run_second_transaction(FileContent file_content, int *IC, int *DC, Table *code_segment, Table *data_segment,
+int run_second_transaction(FileContent file_content, int *IC, Table *code_segment, Table *data_segment,
                            Table *symbol_table);
 
 

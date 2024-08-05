@@ -19,6 +19,7 @@
 
 Table *init_table() {
     Table *table = (Table *) malloc(sizeof(Table));
+    table->entries = (TableEntry *) malloc(1 * sizeof(TableEntry));
 
     table->size = 0;
     table->capacity = 1;

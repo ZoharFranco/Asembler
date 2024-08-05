@@ -34,7 +34,7 @@ int precompile(char *src_path) {
 
     remove_comments(&file_content);
     handle_macros(&file_content);
-    if (file_content.error) {
+    if (file_content.error != SUCCESS) {
         log_internal_error(file_content.error);
         return PRECOMPILATION_MACROS_ERROR;
     }
@@ -42,7 +42,7 @@ int precompile(char *src_path) {
     char *dst_path = concat_strings(src_path, ".am");
     write_file_content(file_content, dst_path);
 
-//    free_file_content(file_content);
+    free_file_content(file_content);
 
     return SUCCESS;
 }
@@ -62,14 +62,14 @@ int compile(char *src_path) {
                                                          symbol_table);
     if (first_transaction_status) {
         log_internal_error(first_transaction_status);
-        return PRECOMPILATION_MACROS_ERROR;
+        return FIRST_TRANSACTION_ERROR;
     }
 
-    int second_transaction_status = run_second_transaction(file_content, &IC, &DC, code_segment, data_segment,
+    int second_transaction_status = run_second_transaction(file_content, &IC, code_segment, data_segment,
                                                            symbol_table);
     if (second_transaction_status) {
         log_internal_error(second_transaction_status);
-        return PRECOMPILATION_MACROS_ERROR;
+        return SECOND_TRANSACTION_ERROR;
     }
 
     free_file_content(file_content);
@@ -86,13 +86,13 @@ int main(int argc, char *argv[]) {
     char *src_path = "try";
 
     ErrorNumber precompilation_status = precompile(src_path);
-    if (precompilation_status) {
+    if (precompilation_status != SUCCESS) {
         log_internal_error(precompilation_status);
         return 1;
     }
 
     ErrorNumber compilation_status = compile(src_path);
-    if (compilation_status) {
+    if (compilation_status != SUCCESS) {
         log_internal_error(compilation_status);
         return 1;
     }

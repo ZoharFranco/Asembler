@@ -151,33 +151,19 @@ int is_valid_string(const char *str) {
 }
 
 
-// Function to format the number as an 8-character string
-char *format_number(unsigned int number, int length) {
-
-    char *result = malloc(length * sizeof(char));
-
-    // Calculate the divisor for extracting the last 'length' digits
-    int divisor = pow(10, length);
-
-    // Handle negative values and flip the bits if necessary
-    unsigned int absNumber;
-    if (number < 0) {
-        absNumber = (unsigned int) (-number); // Convert negative number to unsigned
-    } else {
-        absNumber = (unsigned int) number;
+int is_alphabet_digits_no_spaces_string(const char *str) {
+    while (*str) {
+        if (!isalnum(*str) && *str != '_') {
+            return 0; // Return false if a character is not alphanumeric or an underscore
+        }
+        str++;
     }
+    return 1; // Return true if all characters are valid
+}
 
-    // Get the last 'length' digits by modulo operation
-    int lastNDigits = absNumber % divisor;
-
-    // Create the format string to specify leading zeros based on 'length'
-    char format[10];
-    snprintf(format, sizeof(format), "%%0%d%d", length, length);
-
-    // Print the result with leading zeros if necessary
-    snprintf(result, length + 1, format, lastNDigits);
-
-    printf("%s", result);
-
-    return result;
+void strip_newline(char *str) {
+    char *pos;
+    if ((pos = strchr(str, '\n')) != NULL) {
+        *pos = '\0';
+    }
 }

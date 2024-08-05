@@ -21,11 +21,12 @@
 #include "array_utils.h"
 #include "errors_handling.h"
 #include "registers.h"
+#include "macros.h"
 
 
 char *parse_instruction_label(FileLine file_line) {
     char *label;
-    label = (char *) malloc(LABEL_MAX_SIZE * sizeof(char));
+    label = (char *) malloc(LABEL_BUFFER_SIZE * sizeof(char));
     if (label == NULL) {
         log_internal_error(ALLOCATION_FAILED_TO_ALLOCATE_MEMORY);
         return NULL;
@@ -43,7 +44,7 @@ char *parse_instruction_label(FileLine file_line) {
 }
 
 char *parse_instruction_key(FileLine file_line) {
-    char *instruction_key = (char *) malloc(INSTRUCTION_KEY_MAX_SIZE * sizeof(char));
+    char *instruction_key = (char *) malloc(INSTRUCTION_KEY_BUFFER_SIZE * sizeof(char));
     if (instruction_key == NULL) {
         log_internal_error(ALLOCATION_FAILED_TO_ALLOCATE_MEMORY);
         return NULL;
@@ -66,7 +67,7 @@ char *parse_instruction_key(FileLine file_line) {
 }
 
 char *parse_instruction_args(FileLine file_line) {
-    char *args = (char *) malloc(INSTRUCTION_ARGS_MAX_SIZE * sizeof(char));
+    char *args = (char *) malloc(INSTRUCTION_ARGS_BUFFER_SIZE * sizeof(char));
     if (args == NULL) {
         log_internal_error(ALLOCATION_FAILED_TO_ALLOCATE_MEMORY);
         return NULL;
@@ -143,7 +144,9 @@ DirectiveInstruction parse_directive_instruction(FileLine file_line) {
 
 
 int is_valid_label(char *label) {
-    return (is_empty_string(label)) || (!is_opcode_exist(label) && !is_directive_exist(label));
+    return (is_empty_string(label)) ||
+           (!is_opcode_exist(label) && !is_directive_exist(label) && is_alphabet_digits_no_spaces_string(label)
+            && strcmp(label, MACRO_END_LABEL) != 0 && strcmp(label, MACRO_START_LABEL) != 0);
 }
 
 int is_valid_opcode_instruction(OpcodeInstruction instruction) {
@@ -320,7 +323,7 @@ MachineCodeContent string_directive_instruction_to_machine_code_content(Directiv
     machine_code_content.line_count = (int) strlen(instruction.args) - 2;
     MachineCodeLine *machine_code_lines = malloc(machine_code_content.line_count * sizeof(MachineCodeLine));
     for (int i = 0; i < machine_code_content.line_count; i++) {
-        machine_code_lines[i] = (MachineCodeLine) {0, "", (int) instruction.args[i+1]};
+        machine_code_lines[i] = (MachineCodeLine) {0, "", (int) instruction.args[i + 1]};
     }
     machine_code_content.lines = machine_code_lines;
 
