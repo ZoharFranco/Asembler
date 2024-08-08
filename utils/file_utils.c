@@ -1,7 +1,7 @@
 /*
  ============================================================================
  Name        : file_utils.c
- Author      : zoharfranco
+ Author      : Zohar Franco
  Version     :
  Copyright   : Your copyright notice
  Description : File utils file, variety of functions on files \ with files contents
@@ -13,7 +13,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "file_utils.h"
-#include "strings_utils.h"
 
 
 FileContent read_file_content(char *file_path) {

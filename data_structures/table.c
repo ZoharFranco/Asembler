@@ -1,10 +1,10 @@
 /*
  ============================================================================
  Name        : stack.c
- Author      : zoharfranco
+ Author      : Zohar Franco
  Version     :
  Copyright   : Your copyright notice
- Description : Stack file, stack struct and useful stack functions
+ Description : Table file, Table struct and useful table functions
  ============================================================================
  */
 
@@ -12,7 +12,6 @@
 #include <stdlib.h>
 
 #include "../errors/errors.h"
-#include "../errors/errors_handling.h"
 
 #include "table.h"
 

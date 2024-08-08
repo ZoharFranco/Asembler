@@ -1,7 +1,7 @@
 /*
  ============================================================================
  Name        : assembler.c
- Author      : zohar franco
+ Author      : Zohar Franco
  Version     :
  Copyright   : Your copyright notice
  Description : Main code, Ansi-style
@@ -83,19 +83,23 @@ int compile(char *src_path) {
 
 int main(int argc, char *argv[]) {
 
-    char *src_path = "try";
 
-    ErrorNumber precompilation_status = precompile(src_path);
-    if (precompilation_status != SUCCESS) {
-        log_internal_error(precompilation_status);
-        return 1;
+    for (int i = 1; i < argc; i++) {
+
+        char *src_path = argv[i];
+        printf("\n\n -- Working on: %s -- \n", src_path);
+
+        ErrorNumber precompilation_status = precompile(src_path);
+        if (precompilation_status != SUCCESS) {
+            log_internal_error(precompilation_status);
+        }
+
+        ErrorNumber compilation_status = compile(src_path);
+        if (compilation_status != SUCCESS) {
+            log_internal_error(compilation_status);
+        }
     }
 
-    ErrorNumber compilation_status = compile(src_path);
-    if (compilation_status != SUCCESS) {
-        log_internal_error(compilation_status);
-        return 1;
-    }
 
 }
 

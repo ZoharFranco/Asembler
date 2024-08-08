@@ -7,7 +7,7 @@
 
 
 #include "../data_structures/table.h"
-#include "instructions.h"
+#include "../commands/instructions.h"
 
 /*!
  * Enum of all segments types

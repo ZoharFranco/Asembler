@@ -1,7 +1,7 @@
 /*
  ============================================================================
  Name        : instructions.c
- Author      : zohar franco
+ Author      : Zohar Franco
  Version     :
  Copyright   : Your copyright notice
  Description : Instructions file - declare all instructions parse and logic functions
@@ -18,10 +18,10 @@
 #include "opcodes.h"
 #include "addressing.h"
 #include "encoding.h"
-#include "array_utils.h"
-#include "errors_handling.h"
+#include "../utils/array_utils.h"
+#include "../errors/errors_handling.h"
 #include "registers.h"
-#include "macros.h"
+#include "../precompile/macros.h"
 
 
 char *parse_instruction_label(FileLine file_line) {
@@ -320,11 +320,12 @@ MachineCodeContent string_directive_instruction_to_machine_code_content(Directiv
         return machine_code_content;
     }
 
-    machine_code_content.line_count = (int) strlen(instruction.args) - 2;
+    machine_code_content.line_count = (int) strlen(instruction.args) - 1;
     MachineCodeLine *machine_code_lines = malloc(machine_code_content.line_count * sizeof(MachineCodeLine));
-    for (int i = 0; i < machine_code_content.line_count; i++) {
+    for (int i = 0; i < machine_code_content.line_count - 1; i++) {
         machine_code_lines[i] = (MachineCodeLine) {0, "", (int) instruction.args[i + 1]};
     }
+    machine_code_lines[machine_code_content.line_count-1] = (MachineCodeLine) {0, "", 0};
     machine_code_content.lines = machine_code_lines;
 
     return machine_code_content;

@@ -1,10 +1,10 @@
 /*
  ============================================================================
- Name        : errors_handler.c
- Author      : zohar franco
+ Name        : transactions.c
+ Author      : Zohar Franco
  Version     :
  Copyright   : Your copyright notice
- Description : Errors handling file - to create function and declarations of errors handling
+ Description : Transactions file - functions of all the transactions - assembly to machine code process
  ============================================================================
  */
 
@@ -12,11 +12,9 @@
 
 #include "segments.h"
 #include "transactions.h"
-#include "instructions.h"
-#include "strings_utils.h"
 #include "symbols.h"
-#include "errors_handling.h"
-#include "file_utils.h"
+#include "../utils/strings_utils.h"
+#include "../errors/errors_handling.h"
 
 
 int handle_store_directive_first_transaction(int *DC, Table *data_segment,
@@ -42,6 +40,12 @@ int handle_store_directive_first_transaction(int *DC, Table *data_segment,
     } else {
         machine_code_content = string_directive_instruction_to_machine_code_content(directive_instruction);
     }
+
+    if (machine_code_content.error != SUCCESS) {
+        return machine_code_content.error;
+    }
+
+
     SegmentEntry segment_entry = (SegmentEntry) {machine_code_content, DATA_SEGMENT, *DC,
                                                  directive_instruction.assembly_line, directive_instruction.label};
     add_segment_entry(data_segment, &segment_entry);
@@ -50,6 +54,10 @@ int handle_store_directive_first_transaction(int *DC, Table *data_segment,
 }
 
 int handle_link_directive_first_transaction(Table *symbols_table, DirectiveInstruction directive_instruction) {
+
+    if (!is_valid_label(directive_instruction.label)) {
+        return ILLEGAL_LABEL;
+    }
 
     // Handle extern (step 9)
     if (directive_instruction.directive.type == EXTERN_DIRECTIVE) {
@@ -361,7 +369,12 @@ int run_second_transaction(FileContent file_content, int *IC, Table *code_segmen
     }
 
     // Build output files (step 10)
-    build_output_files(file_content.file_name, code_segment, data_segment, symbols_table);
+
+    size_t len = strlen(file_content.file_name);
+    char file_name[len];
+    strcpy(file_name, file_content.file_name);
+    file_name[len - 3] = '\0';
+    build_output_files(file_name, code_segment, data_segment, symbols_table);
     return SUCCESS;
 }
 

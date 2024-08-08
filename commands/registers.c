@@ -1,7 +1,7 @@
 /*
  ============================================================================
  Name        : registries.c
- Author      : zoharfranco
+ Author      : Zohar Franco
  Version     :
  Copyright   : Your copyright notice
  Description : registers file - declare all registers and + functions and declarations of opcodes utils
@@ -9,11 +9,8 @@
  */
 
 
-#include <stdio.h>
 #include <stdlib.h>
 #include "../utils/array_utils.h"
-
-#include "addressing.h"
 
 #include "registers.h"
 

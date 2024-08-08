@@ -1,12 +1,22 @@
 
+/*
+ ============================================================================
+ Name        : macros.c
+ Author      : Zohar Franco
+ Version     :
+ Copyright   : Your copyright notice
+ Description : macros file - functions to handle macros in source files
+ ============================================================================
+ */
+
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "macros.h"
-#include "instructions.h"
-#include "strings_utils.h"
+#include "../commands/instructions.h"
+#include "../utils/strings_utils.h"
 
 
 int read_and_remove_macros(FileContent *file_content, Macro **macros, int *macro_count) {

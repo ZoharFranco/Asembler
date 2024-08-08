@@ -1,7 +1,7 @@
 /*
  ============================================================================
  Name        : strings_utils.c
- Author      : zoharfranco
+ Author      : Zohar Franco
  Version     :
  Copyright   : Your copyright notice
  Description : Strings utils - functions to handle strings manipulation
@@ -13,13 +13,12 @@
 #include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
-#include <math.h>
 
 
 #include "../assembler.h"
 #include "../errors/errors.h"
-#include "strings_utils.h"
-#include "errors_handling.h"
+#include "../utils/strings_utils.h"
+#include "../errors/errors_handling.h"
 
 void remove_whitespace(char *str) {
     if (str[0] != '\0') {

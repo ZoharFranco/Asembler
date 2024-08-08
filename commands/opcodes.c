@@ -1,7 +1,7 @@
 /*
  ============================================================================
  Name        : opcode.c
- Author      : zoharfranco
+ Author      : Zohar Franco
  Version     :
  Copyright   : Your copyright notice
  Description : Opcode file - declare all opcodes and + functions and declarations of opcodes utils
@@ -9,7 +9,6 @@
  */
 
 
-#include <stdio.h>
 #include <stdlib.h>
 #include "../utils/array_utils.h"
 #include "opcodes.h"

@@ -13,6 +13,7 @@
  * Enum of all addressing types
  */
 typedef enum {
+    NOT_EXIST,
     IMMEDIATE_ADDRESSING,
     DIRECT_ADDRESSING,
     REGISTRY_INDIRECT_ADDRESSING,

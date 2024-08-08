@@ -1,15 +1,13 @@
 /*
  ============================================================================
- Name        : errors_handler.c
- Author      : zoharfranco
+ Name        : comments.c
+ Author      : Zohar Franco
  Version     :
  Copyright   : Your copyright notice
- Description : Errors handling file - to create function and declarations of errors handling
+ Description : Comments file - functions to handle comments in source files
  ============================================================================
  */
 
-#include <stdio.h>
-#include <stdlib.h>
 
 #include "comments.h"
 

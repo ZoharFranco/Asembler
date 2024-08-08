@@ -1,7 +1,7 @@
 /*
  ============================================================================
  Name        : array_utils.c
- Author      : zoharfranco
+ Author      : Zohar Franco
  Version     :
  Copyright   : Your copyright notice
  Description : Array utils file, variety of functions on list \ with lists
