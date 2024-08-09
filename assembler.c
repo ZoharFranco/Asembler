@@ -98,6 +98,10 @@ int main(int argc, char *argv[]) {
         if (compilation_status != SUCCESS) {
             log_internal_error(compilation_status);
         }
+
+        if (precompilation_status == SUCCESS && compilation_status == SUCCESS) {
+            log_internal_error(compilation_status);
+        }
     }
 
 
